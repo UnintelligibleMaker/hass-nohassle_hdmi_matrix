@@ -1,10 +1,15 @@
 No Hassle AV HDMI Matrix
 ============
-The nohassle_hdmi_matrix platform allows you to control [No Hassle AV 8x8 HDMI Matrix Switch](https://www.amazon.com/HDMI-Matrix-Switcher-18GBPS-Ultra/dp/B01GKFQNG8) by polling its webui. My matrix didn't play nicely with UDP packages in the beginning so that's why I went with this method. I may rewrite this to use UDP in a later revision if I see any benefit of doing so, but for the moment I see this as the best solution as the integration can read the current status of the matrix as well as change inputs.
+This is my customized version of: https://github.com/IDmedia/hass-nohassle_hdmi_matrix  
+Customizations: 
+1) My HDMI crossbar uses a different firmware or something so the names didn't quite line up so this uses the names as seen on mine.
+2) I sent the status to the source.  I don't want on/off status I want the source.
+3) 
+
 
 ## Installation using HACS (Recommended)
 1. Navigate to HACS and add a custom repository  
-    **URL:** https://github.com/IDmedia/hass-nohassle_hdmi_matrix  
+    **URL:** https://github.com/UnintelligibleMaker/hass-nohassle_hdmi_matrix
     **Category:** Integration
 2. Install module as usual
 3. Restart Home Assistant
