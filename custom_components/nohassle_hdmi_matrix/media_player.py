@@ -86,7 +86,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
                         api_mode = 2
             except:
                 pass
-        
+        _LOGGER.warning('api_mode %s', api_mode)
         if api_mode:
             connection = host
         else:
@@ -97,8 +97,9 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     devices = []
     for zone_id, extra in config[CONF_ZONES].items():
-        _LOGGER.info('Adding zone %d - %s', zone_id, extra[CONF_NAME])
+        _LOGGER.warning('Adding zone %d - %s', zone_id, extra[CONF_NAME])
         unique_id = f'{connection}-{zone_id}'
+        _LOGGER.warning('unique_id %s', unique_id)
         device = HDMIMatrixZone(connection, api_mode, sources, zone_id, extra[CONF_NAME])
         hass.data[DATA_HDMIMATRIX][unique_id] = device
         devices.append(device)
@@ -156,16 +157,24 @@ class HDMIMatrixZone(MediaPlayerEntity):
                 state = None
 
         if self._api_mode == 2:
+            _LOGGER.warning('_api_mode %s', self._api_mode)
             try:
                 urllib.request.urlopen(f'http://{self._hdmi_host}/cgi-bin/submit?cmd=getpage2!', timeout=5)
                 with urllib.request.urlopen(f'http://{self._hdmi_host}/cgi-bin/query', timeout=5) as response:
                     response = response.read().decode('utf-8')
+                    _LOGGER.warning('response %s', response)
+
                     r = json.loads(response)
-                    states = r['SwitchStatus']
+                    states = r['allsource']
+                    _LOGGER.warning('states %s', states)
                     state = states[self._zone_id - 1]
-            except:
+                    _LOGGER.warning('state %s', state)
+
+            except json.JSONDecodeError:
+                return
+            except Exception as e:
+                _LOGGER.exception("KTM", exc_info=e)
                 self._state = STATE_OFF
-                state = None
                 
         if not state:
             return
@@ -185,7 +194,7 @@ class HDMIMatrixZone(MediaPlayerEntity):
     @property
     def state(self):
         """Return the state of the zone."""
-        return self._state
+        return self._source
 
     @property
     def supported_features(self):
@@ -212,7 +221,7 @@ class HDMIMatrixZone(MediaPlayerEntity):
         if source not in self._source_name_id:
             return
         idx = self._source_name_id[source]
-        _LOGGER.debug('Setting zone %d source to %s', self._zone_id, idx)
+        _LOGGER.warning('Setting zone %d source to %s', self._zone_id, idx)
             
         if self._api_mode == 1:
             try:
@@ -226,3 +235,4 @@ class HDMIMatrixZone(MediaPlayerEntity):
                 urllib.request.urlopen(f'http://{self._hdmi_host}/cgi-bin/submit?cmd=hex(a5,5b,02,03,{idx:02},00,{self._zone_id:02},00,00,00,00,00,{flag})', timeout=5)
             except:
                 pass
+        self._source = source
