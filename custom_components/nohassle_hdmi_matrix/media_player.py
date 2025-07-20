@@ -118,11 +118,21 @@ class HDMIMatrixZone(MediaPlayerEntity):
         self._unique_id = f'{hdmi_host}-output-{device_num}'
         self._sources = self.get_sources(host=hdmi_host)
         self._state = STATE_ON if self.are_devices_powered_on(hdmi_host) else STATE_OFF
+
         try:
-            source_number = self.get_output_status(self._hdmi_host).get("allsource")[self._device_number]
-            self._source = self.get_input_status(self._hdmi_host).get("inname")[source_number]
+            output_status = self.get_output_status(self._hdmi_host)
+            if not output_status:
+                self._source = "UNKNOWN"
+                return
+            source_number = output_status.get("allsource")[self._device_number]
+
+            input_status = self.get_input_status(self._hdmi_host)
+            if not input_status:
+                self._source = "UNKNOWN"
+                return
+            self._source = input_status.get("inname")[source_number]
         except Exception as e:
-            _LOGGER.exception(f"Exception occurred: {e}", exc_info=True)
+            _LOGGER.debug(f"Exception occurred: {e}", exc_info=True)
             self._source = "UNKNOWN"
 
     def update(self):
@@ -130,13 +140,13 @@ class HDMIMatrixZone(MediaPlayerEntity):
         try:
             self._state = STATE_ON if self.are_devices_powered_on(self._hdmi_host)  else STATE_OFF
         except Exception as e:
-            _LOGGER.exception(f"Exception occurred: {e}", exc_info=True)
+            _LOGGER.debug(f"Exception occurred: {e}", exc_info=True)
             self._state = STATE_OFF
         try:
             source_number = self.get_output_status(self._hdmi_host).get("allsource")[self._device_number]
             self._source = self.get_input_status(self._hdmi_host).get("inname")[source_number]
         except Exception as e:
-            _LOGGER.exception(f"Exception: {e}", exc_info=True)
+            _LOGGER.debug(f"Exception: {e}", exc_info=True)
             self._source = "Unknown"
 
     @property
@@ -451,7 +461,11 @@ class HDMIMatrixZone(MediaPlayerEntity):
         _LOGGER.debug("Checking if devices are powered on...")
 
         # Retrieve device status
-        status = HDMIMatrixZone.get_status(host)
+        try:
+            status = HDMIMatrixZone.get_status(host)
+        except Exception as e:
+            _LOGGER.exception(f"Exception occurred: {e}", exc_info=True)
+            return None
 
         if not status:
             _LOGGER.error("Failed to retrieve status")
