@@ -149,7 +149,7 @@ class HDMIMatrixZone(MediaPlayerEntity):
     @property
     def name(self):
         """Return the name of the zone."""
-        return  self.get_devices(host=self._hdmi_host)[self._device_number]
+        return  self._device_name
 
     @property
     def state(self):
