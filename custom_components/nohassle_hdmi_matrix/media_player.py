@@ -159,7 +159,7 @@ class HDMIMatrixZone(MediaPlayerEntity):
         """Return the current source as media title."""
         if self.state is STATE_OFF:
             return "Powered Off"
-        return f"{self.source()} on {self.name()}"
+        return f"{self.source} on {self.name()}"
 
     @property
     def source(self):
