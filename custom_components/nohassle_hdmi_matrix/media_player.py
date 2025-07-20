@@ -35,9 +35,6 @@ MEDIA_PLAYER_SCHEMA = vol.Schema({
 #     vol.Required(CONF_NAME): cv.string,
 # })
 
-CONF_ZONES = 'zones'
-CONF_SOURCES = 'sources'
-
 DATA_HDMIMATRIX = 'hdmi_matrix'
 
 SERVICE_SETZONE = 'hdmi_matrix_set_zone'
@@ -227,9 +224,10 @@ class HDMIMatrixZone(MediaPlayerEntity):
                 # Execute the request
                 with request.urlopen(req, req_data) as response:
                     if response.status == 200:
+                        _LOGGER.debug(f"Attempt {attempt}/{attempts}: Successful response: {request}")
                         result = json.loads(response.read().decode())
-                        _LOGGER.debug(f"Attempt {attempt}/{attempts}: Successful response: {result}")
-                        return result
+                        if result and result.get("comhead") == instr.get("comhead"):
+                            return result
 
             except Exception as e:
                 _LOGGER.warning(f"Attempt {attempt}/{attempts} failed: {e}")
