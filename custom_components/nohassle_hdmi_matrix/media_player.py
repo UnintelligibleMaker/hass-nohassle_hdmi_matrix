@@ -119,7 +119,7 @@ class HDMIMatrixZone(MediaPlayerEntity):
         self._sources = self.get_sources(host=hdmi_host)
         self._state = STATE_ON if self.are_devices_powered_on(hdmi_host) else STATE_OFF
         try:
-            source_number = self.get_output_status(self._hdmi_host).get("allsource")[self._device_id]
+            source_number = self.get_output_status(self._hdmi_host).get("allsource")[self._device_number]
             self._source = self.get_input_status(self._hdmi_host).get("inname")[source_number]
         except Exception as e:
             _LOGGER.exception(f"Exception occurred: {e}", exc_info=True)
@@ -133,7 +133,7 @@ class HDMIMatrixZone(MediaPlayerEntity):
             _LOGGER.exception(f"Exception occurred: {e}", exc_info=True)
             self._state = STATE_OFF
         try:
-            source_number = self.get_output_status(self._hdmi_host).get("allsource")[self._device_id]
+            source_number = self.get_output_status(self._hdmi_host).get("allsource")[self._device_number]
             self._source = self.get_input_status(self._hdmi_host).get("inname")[source_number]
         except Exception as e:
             _LOGGER.exception(f"Exception: {e}", exc_info=True)
@@ -142,7 +142,7 @@ class HDMIMatrixZone(MediaPlayerEntity):
     @property
     def name(self):
         """Return the name of the zone."""
-        return  self.get_devices(host=self._hdmi_host)[self._device_id]
+        return  self.get_devices(host=self._hdmi_host)[self._device_number]
 
     @property
     def state(self):
