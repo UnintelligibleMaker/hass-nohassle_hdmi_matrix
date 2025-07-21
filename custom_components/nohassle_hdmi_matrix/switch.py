@@ -2,8 +2,8 @@
 import logging
 from homeassistant.components.switch import SwitchEntity
 
-from nohassle_hdmi_matrix.nohassle_hdmi_matrix import NoHassleHDMOMatrixController
-from nohassle_hdmi_matrix.const import DATA_HDMIMATRIX, ATTR_SOURCE, SERVICE_SETZONE
+from .nohassle_hdmi_matrix import NoHassleHDMOMatrixController
+from .const import DATA_HDMIMATRIX, ATTR_SOURCE, SERVICE_SETZONE
 
 _LOGGER = logging.getLogger(__name__)
 from homeassistant.const import (
@@ -60,6 +60,7 @@ class HDMIMatrixPower(SwitchEntity):
         self._controller = controller
         self._unique_id = f'{hdmi_host}-power-switch'
         self._device_name = f'{hdmi_host} Power Switch'
+        self._is_on = self._controller.are_devices_powered_on()
 
         try:
             output_status = self._controller.get_output_status()
@@ -80,6 +81,12 @@ class HDMIMatrixPower(SwitchEntity):
     def update(self):
         """Retrieve latest state."""
         try:
+            self._is_on = self._controller.are_devices_powered_on()
+        except Exception as e:
+            _LOGGER.debug(f"Exception: {e}", exc_info=True)
+            self._is_on = None
+
+        try:
             source_number = self._controller.get_output_status().get("allsource")[self._device_number]
             self.current_option = self._controller.get_input_status().get("inname")[source_number]
         except Exception as e:
@@ -99,7 +106,7 @@ class HDMIMatrixPower(SwitchEntity):
     @property
     def is_on(self):
         """Return the current input source of the device."""
-        return self._controller.are_devices_powered_on()
+        return self._is_on
 
     def turn_on(self):
         self._controller.power_on_devices()
