@@ -9,8 +9,8 @@ from typing import Optional, Tuple
 
 from homeassistant.components.select import SelectEntity
 
-from nohassle_hdmi_matrix import NoHassleHDMOMatrixController
-from const import  DATA_HDMIMATRIX, ATTR_SOURCE, SERVICE_SETZONE
+from nohassle_hdmi_matrix.nohassle_hdmi_matrix
+from nohassle_hdmi_matrix.const import  DATA_HDMIMATRIX, ATTR_SOURCE, SERVICE_SETZONE
 
 _LOGGER = logging.getLogger(__name__)
 from homeassistant.const import (

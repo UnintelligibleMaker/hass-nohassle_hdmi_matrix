@@ -1,9 +1,9 @@
 """Support for interfacing with HDMI Matrix."""
 import logging
-from homeassistant.components.switch import SwtchEntity
+from homeassistant.components.switch import SwitchEntity
 
-from nohassle_hdmi_matrix import NoHassleHDMOMatrixController
-from const import DATA_HDMIMATRIX, ATTR_SOURCE, SERVICE_SETZONE
+from nohassle_hdmi_matrix.nohassle_hdmi_matrix import NoHassleHDMOMatrixController
+from nohassle_hdmi_matrix.const import DATA_HDMIMATRIX, ATTR_SOURCE, SERVICE_SETZONE
 
 _LOGGER = logging.getLogger(__name__)
 from homeassistant.const import (
@@ -53,7 +53,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     hass.services.register(DOMAIN, SERVICE_SETZONE, service_handle)
 
 
-class HDMIMatrixPower(SwtchEntity):
+class HDMIMatrixPower(SwitchEntity):
     """Representation of an HDMI matrix device (output)."""
 
     def __init__(self, hdmi_host, controller):
