@@ -98,16 +98,43 @@ class NoHassleHDMOMatrixController:
 
     # ----------------- Device and Sources Management -----------------
 
-    def get_devices(self) -> Optional[List[str]]:
+    def get_devices(self, attempts: int = 3) -> Optional[List[str]]:
         """
-        Retrieves the list of devices from the host.
+        Retrieves the list of devices from the host with optional retry attempts.
+
+        Args:
+            attempts (int): Number of retry attempts if the output status is not valid.
 
         Returns:
             Optional[List[str]]: List of device names if successful; otherwise None.
         """
-        output_status = self.get_output_status()
-        devices = output_status.get("name") if output_status else None
-        return self._deduplicate_names(devices) if devices else None
+        for attempt in range(1, attempts + 1):
+            try:
+                # Retrieve output status (which contains device names)
+                output_status = self.get_output_status()
+
+                if not output_status or "name" not in output_status:
+                    _LOGGER.warning(
+                        f"Attempt {attempt}/{attempts}: Output status missing or does not contain 'name'. "
+                        f"Response: {output_status}"
+                    )
+                    continue
+
+                devices = output_status.get("name")
+                if devices:
+                    return self._deduplicate_names(devices)
+
+                _LOGGER.warning(
+                    f"Attempt {attempt}/{attempts}: 'name' field in output status is None or empty."
+                )
+            except Exception as e:
+                _LOGGER.error(f"Attempt {attempt}/{attempts} failed due to an error: {e}")
+
+            # Optional delay between retry attempts (e.g., handle network retries)
+            time.sleep(1)
+
+        _LOGGER.error("Failed to retrieve devices after all retry attempts.")
+        return None
 
     def get_device_count(self) -> int:
         """
@@ -122,16 +149,44 @@ class NoHassleHDMOMatrixController:
         # Return the count of devices or 0 as fallback
         return len(devices) if devices else 0
 
-    def get_sources(self) -> Optional[List[str]]:
+    def get_sources(self, attempts: int = 3) -> Optional[List[str]]:
         """
-        Retrieves the list of sources from the host.
+        Retrieves the list of sources from the host with optional retry attempts.
+
+        Args:
+            attempts (int): Number of retry attempts if the input status is not valid.
 
         Returns:
             Optional[List[str]]: List of source names if successful; otherwise None.
         """
-        input_status = self.get_input_status()
-        sources = input_status.get("name") if input_status else None
-        return self._deduplicate_names(sources) if sources else None
+        for attempt in range(1, attempts + 1):
+            try:
+                # Retrieve input status (which contains source names)
+                input_status = self.get_input_status()
+
+                if not input_status or "inname" not in input_status:
+                    _LOGGER.warning(
+                        f"Attempt {attempt}/{attempts}: Input status missing or does not contain 'inname'. "
+                        f"Response: {input_status}"
+                    )
+                    continue
+
+                sources = input_status.get("inname")
+                if sources:
+                    return self._deduplicate_names(sources)
+
+                _LOGGER.warning(
+                    f"Attempt {attempt}/{attempts}: 'inname' field in input status is None or empty."
+                )
+            except Exception as e:
+                _LOGGER.error(f"Attempt {attempt}/{attempts} failed due to error: {e}")
+
+            # Optional delay between retry attempts (e.g., for network stability)
+            time.sleep(1)
+
+        _LOGGER.error("Failed to retrieve sources after all retry attempts.")
+        return None
+
 
     def set_device_source(self, device_num: int, source_num: int) -> Optional[dict]:
         """
