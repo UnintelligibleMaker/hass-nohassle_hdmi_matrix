@@ -10,7 +10,7 @@ _LOGGER = logging.getLogger(__name__)
 
 class NoHassleHDMOMatrixController:
     """
-    A class to manage device operations, like sending commands, retrieving statuses,
+    A class to manage device operations such as sending commands, retrieving statuses,
     managing sources/devices, and performing power operations.
     """
 
@@ -36,20 +36,20 @@ class NoHassleHDMOMatrixController:
         Returns:
             Optional[dict]: JSON response from the host if successful; otherwise None.
         """
-        _LOGGER.debug(f"Sending instruction: {instr}")
+        _LOGGER.debug(f"Preparing to send instruction: {instr}")
 
-        req_data = json.dumps(instr).encode('utf-8')
+        req_data = json.dumps(instr).encode("utf-8")
         req = request.Request(f"http://{self.host}/cgi-bin/instr")
-        req.add_header('Content-Type', 'application/json; charset=utf-8')
-        req.add_header('Content-Length', str(len(req_data)))
+        req.add_header("Content-Type", "application/json; charset=utf-8")
+        req.add_header("Content-Length", str(len(req_data)))
 
         for attempt in range(1, attempts + 1):
             try:
                 with request.urlopen(req, req_data) as response:
                     if response.status == 200:
-                        _LOGGER.debug(f"Attempt {attempt}/{attempts}: Successful response.")
                         result = json.loads(response.read().decode())
                         if result.get("comhead") == instr.get("comhead"):
+                            _LOGGER.debug(f"Instruction succeeded on attempt {attempt}.")
                             return result
             except Exception as e:
                 _LOGGER.warning(f"Attempt {attempt}/{attempts} failed: {e}")
@@ -60,15 +60,15 @@ class NoHassleHDMOMatrixController:
 
     def _send_command(self, command: str) -> Optional[dict]:
         """
-        Helper method to send a command to the host.
+        Sends a predefined command to the host.
 
         Args:
-            command (str): The command to be sent to the device.
+            command (str): The command to be sent.
 
         Returns:
-            Optional[dict]: Response from the device if successful; otherwise None.
+            Optional[dict]: Response from the host if successful; otherwise None.
         """
-        _LOGGER.debug(f"Sending '{command}' command to {self.host}.")
+        _LOGGER.debug(f"Sending command: '{command}'")
         instr = {
             "comhead": command,
             "language": 0,
@@ -77,46 +77,43 @@ class NoHassleHDMOMatrixController:
 
     def _log_response(self, instr: dict, action: str, delay: int = 0) -> Optional[dict]:
         """
-        Helper method to log responses from instructions.
+        Sends an instruction and logs the result.
 
         Args:
             instr (dict): The instruction to be sent.
-            action (str): A description of the action.
-            delay (int): Time to wait after the command (default: 0).
+            action (str): The corresponding action for the instruction.
+            delay (int): Optional delay after sending the instruction.
 
         Returns:
-            Optional[dict]: The server's response if successful; otherwise None.
+            Optional[dict]: The host response if successful; otherwise None.
         """
         response = self._send_instr(instr)
         if response:
-            _LOGGER.debug(f"{action} executed successfully. Response: {response}")
+            _LOGGER.info(f"{action} executed successfully. Response: {response}")
             if delay:
                 time.sleep(delay)
             return response
-        _LOGGER.error(f"Failed to execute {action}.")
+        _LOGGER.error(f"Failed to execute action '{action}'.")
         return None
 
     # ----------------- Device and Sources Management -----------------
 
     def get_devices(self, attempts: int = 3) -> Optional[List[str]]:
         """
-        Retrieves the list of devices from the host with optional retry attempts.
+        Retrieves the list of devices from the host.
 
         Args:
-            attempts (int): Number of retry attempts if the output status is not valid.
+            attempts (int): Number of retry attempts.
 
         Returns:
             Optional[List[str]]: List of device names if successful; otherwise None.
         """
         for attempt in range(1, attempts + 1):
             try:
-                # Retrieve output status (which contains device names)
                 output_status = self.get_output_status()
-
                 if not output_status or "name" not in output_status:
                     _LOGGER.warning(
-                        f"Attempt {attempt}/{attempts}: Output status missing or does not contain 'name'. "
-                        f"Response: {output_status}"
+                        f"Attempt {attempt}/{attempts}: Output status is invalid: {output_status}"
                     )
                     continue
 
@@ -124,50 +121,40 @@ class NoHassleHDMOMatrixController:
                 if devices:
                     return self._deduplicate_names(devices)
 
-                _LOGGER.warning(
-                    f"Attempt {attempt}/{attempts}: 'name' field in output status is None or empty."
-                )
+                _LOGGER.warning(f"Attempt {attempt}/{attempts}: 'name' field is empty.")
             except Exception as e:
-                _LOGGER.error(f"Attempt {attempt}/{attempts} failed due to an error: {e}")
-
-            # Optional delay between retry attempts (e.g., handle network retries)
+                _LOGGER.error(f"Attempt {attempt}/{attempts} failed with error: {e}")
             time.sleep(1)
 
-        _LOGGER.error("Failed to retrieve devices after all retry attempts.")
+        _LOGGER.error("Failed to retrieve devices after all attempts.")
         return None
 
     def get_device_count(self) -> int:
         """
-            Retrieves the total count of devices connected to the host.
+        Returns the total count of connected devices.
 
-            Returns:
-                int: The count of devices if found, otherwise 0.
-            """
-        # Get the list of devices
+        Returns:
+            int: Device count if successful; 0 otherwise.
+        """
         devices = self.get_devices()
-
-        # Return the count of devices or 0 as fallback
         return len(devices) if devices else 0
 
     def get_sources(self, attempts: int = 3) -> Optional[List[str]]:
         """
-        Retrieves the list of sources from the host with optional retry attempts.
+        Retrieves the list of sources from the host.
 
         Args:
-            attempts (int): Number of retry attempts if the input status is not valid.
+            attempts (int): Number of retry attempts.
 
         Returns:
             Optional[List[str]]: List of source names if successful; otherwise None.
         """
         for attempt in range(1, attempts + 1):
             try:
-                # Retrieve input status (which contains source names)
                 input_status = self.get_input_status()
-
                 if not input_status or "inname" not in input_status:
                     _LOGGER.warning(
-                        f"Attempt {attempt}/{attempts}: Input status missing or does not contain 'inname'. "
-                        f"Response: {input_status}"
+                        f"Attempt {attempt}/{attempts}: Input status is invalid: {input_status}"
                     )
                     continue
 
@@ -175,100 +162,76 @@ class NoHassleHDMOMatrixController:
                 if sources:
                     return self._deduplicate_names(sources)
 
-                _LOGGER.warning(
-                    f"Attempt {attempt}/{attempts}: 'inname' field in input status is None or empty."
-                )
+                _LOGGER.warning(f"Attempt {attempt}/{attempts}: 'inname' field is empty.")
             except Exception as e:
-                _LOGGER.error(f"Attempt {attempt}/{attempts} failed due to error: {e}")
-
-            # Optional delay between retry attempts (e.g., for network stability)
+                _LOGGER.error(f"Attempt {attempt}/{attempts} failed with error: {e}")
             time.sleep(1)
 
-        _LOGGER.error("Failed to retrieve sources after all retry attempts.")
+        _LOGGER.error("Failed to retrieve sources after all attempts.")
         return None
-
 
     def set_device_source(self, device_num: int, source_num: int) -> Optional[dict]:
         """
         Sets the source for a specific device.
 
         Args:
-            device_num (int): The device number to set the source for.
-            source_num (int): The source number to assign to the device.
+            device_num (int): Target device.
+            source_num (int): Source to assign.
 
         Returns:
-            Optional[dict]: Response if the command was successful; otherwise None.
+            Optional[dict]: Response if successful; otherwise None.
         """
-        _LOGGER.debug(f"Setting source ({source_num}) for device ({device_num}).")
+        _LOGGER.debug(f"Setting source '{source_num}' for device '{device_num}'.")
         instr = {
             "comhead": "video switch",
             "language": 0,
             "source": [source_num, device_num],
         }
-        return self._log_response(instr, "'video switch' command")
-
-    # ----------------- Device Status Commands -----------------
-
-    def get_status(self) -> Optional[dict]:
-        """Retrieves the general status of the device."""
-        return self._send_command("get status")
-
-    def get_video_status(self) -> Optional[dict]:
-        """Retrieves the video status of the device."""
-        return self._send_command("get videostatus")
-
-    def get_input_status(self) -> Optional[dict]:
-        """Retrieves the input status of the device."""
-        return self._send_command("get input status")
-
-    def get_output_status(self) -> Optional[dict]:
-        """Retrieves the output status of the device."""
-        return self._send_command("get output status")
+        return self._log_response(instr, "video switch command")
 
     # ----------------- Power Control -----------------
 
     def power_on_devices(self) -> None:
-        """Sends a command to power on the devices."""
-        self._perform_power_command(1, 'power-on')
+        """Powers on all devices."""
+        self._perform_power_command(1, "power-on")
 
     def power_off_devices(self) -> None:
-        """Sends a command to power off the devices."""
-        self._perform_power_command(0, 'power-off')
+        """Powers off all devices."""
+        self._perform_power_command(0, "power-off")
 
     def are_devices_powered_on(self) -> Optional[bool]:
         """
-        Checks if the devices are powered on.
+        Checks device power status.
 
         Returns:
-            Optional[bool]: True if devices are powered on, False if not; None if status cannot be determined.
+            Optional[bool]: True if devices are on, False otherwise; or None if unknown.
         """
         status = self.get_status()
         if not status or "power" not in status:
             return None
-        return int(status["power"]) == 1
+        return status["power"] == 1
 
     def _perform_power_command(self, power_state: int, action: str) -> None:
         """
-        Sends a power-on/off command to the devices.
+        Sends a power state command to devices.
 
         Args:
-            power_state (int): The power state (1 for on, 0 for off).
-            action (str): A description of the action being performed.
+            power_state (int): 1 for on, 0 for off.
+            action (str): The action description.
         """
-        _LOGGER.debug(f"Performing '{action}' command.")
         instr = {
             "comhead": "set poweronoff",
             "language": 0,
             "power": power_state,
         }
-        self._log_response(instr, f"'{action}' command", delay=5)
+        self._log_response(instr, action, delay=2)
 
     # ----------------- Utility Methods -----------------
 
     @staticmethod
     def _deduplicate_names(names: Optional[List[str]]) -> List[str]:
         """
-        Deduplicates a list of names with unique suffixes.
+        Deduplicates a list of names, appending a unique suffix for duplicates.
 
         Args:
             names (Optional[List[str]]): List of names to deduplicate.
@@ -280,8 +243,7 @@ class NoHassleHDMOMatrixController:
             return []
 
         seen = {}
-        for i in range(len(names)):
-            name = names[i]
+        for i, name in enumerate(names):
             if name not in seen:
                 seen[name] = 0
             else:

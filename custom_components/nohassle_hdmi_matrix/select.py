@@ -122,7 +122,7 @@ class HDMIMatrixZone(SelectEntity):
     @property
     def options(self):
         """Return the name of the zone."""
-        return  self._options
+        return  self._options or []
 
     @property
     def unique_id(self):
@@ -131,12 +131,18 @@ class HDMIMatrixZone(SelectEntity):
 
     def select_option(self, option: str) -> None:
         """Set input option."""
-        options = self._controller.get_sources()
-        option_num = options.index(option) if option in option else None
+        _LOGGER.error(f"Option: {self.options}")
+        option_num = self.options.index(option)
         if not option_num:
-            _LOGGER.error(f"Unknown Option: {option}")
+            _LOGGER.error(f"Unknown Option: {option}, N: {option_num}")
             return
 
-        _LOGGER.info(f'Setting device {self._device_number} source to {option_num}')
+        _LOGGER.error(f'Setting device {self._device_number} source to {option_num}')
+        power_off = False
+        if not self._controller.are_devices_powered_on():
+            self._controller.power_on_devices()
+            power_off = True
         self._controller.set_device_source(device_num=self._device_number, source_num=option_num)
         self.current_option = option
+        if power_off:
+            self._controller.power_off_devices()
