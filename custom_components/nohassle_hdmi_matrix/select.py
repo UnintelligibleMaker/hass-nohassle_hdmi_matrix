@@ -81,7 +81,7 @@ class HDMIMatrixZone(SelectEntity):
             if not output_status:
                 self.current_option = None
                 return
-            source_number = output_status.get("allsource")[self._device_number]
+            source_number = output_status.get("allsource")[self._device_number] - 1
 
             input_status = self._controller.get_input_status()
             if not input_status:
@@ -89,7 +89,7 @@ class HDMIMatrixZone(SelectEntity):
                 return
             self.current_option = input_status.get("inname")[source_number]
         except Exception as e:
-            _LOGGER.info(f"Exception occurred: {e}", exc_info=True)
+            _LOGGER.error(f"Exception occurred: {e}", exc_info=True)
             self.current_option = None
 
     def update(self):
@@ -97,21 +97,21 @@ class HDMIMatrixZone(SelectEntity):
         try:
             self._options = self._controller.get_sources()
         except Exception as e:
-            _LOGGER.info(f"Exception: {e}", exc_info=True)
+            _LOGGER.error(f"Exception: {e}", exc_info=True)
             self._options = None
 
         try:
-            self._device_name = self._controller.get_devices()[device_num]
+            self._device_name = self._controller.get_devices()[self._device_number]
         except Exception as e:
-            _LOGGER.info(f"Exception: {e}", exc_info=True)
+            _LOGGER.error(f"Exception: {e}", exc_info=True)
             self._device_name = None
 
 
         try:
-            source_number = self._controller.get_output_status().get("allsource")[self._device_number]
+            source_number = self._controller.get_output_status().get("allsource")[self._device_number] - 1
             self.current_option = self._controller.get_input_status().get("inname")[source_number]
         except Exception as e:
-            _LOGGER.info(f"Exception: {e}", exc_info=True)
+            _LOGGER.error(f"Exception: {e}", exc_info=True)
             self.current_option = None
 
     @property
@@ -131,18 +131,17 @@ class HDMIMatrixZone(SelectEntity):
 
     def select_option(self, option: str) -> None:
         """Set input option."""
-        _LOGGER.error(f"Option: {self.options}")
         option_num = self.options.index(option)
         if not option_num:
             _LOGGER.error(f"Unknown Option: {option}, N: {option_num}")
             return
 
-        _LOGGER.error(f'Setting device {self._device_number} source to {option_num}')
+        _LOGGER.debug(f'Setting device {self._device_number} source to {option_num}')
         power_off = False
         if not self._controller.are_devices_powered_on():
             self._controller.power_on_devices()
             power_off = True
-        self._controller.set_device_source(device_num=self._device_number, source_num=option_num)
+        self._controller.set_device_source(device_num=self._device_number + 1, source_num=option_num + 1)
         self.current_option = option
         if power_off:
             self._controller.power_off_devices()

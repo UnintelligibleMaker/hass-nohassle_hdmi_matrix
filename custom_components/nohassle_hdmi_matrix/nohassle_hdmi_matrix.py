@@ -47,15 +47,16 @@ class NoHassleHDMOMatrixController:
             try:
                 with request.urlopen(req, req_data) as response:
                     if response.status == 200:
-                        result = json.loads(response.read().decode())
+                        result_string = response.read().decode()
+                        result = json.loads(result_string)
                         if result.get("comhead") == instr.get("comhead"):
                             _LOGGER.debug(f"Instruction succeeded on attempt {attempt}.")
                             return result
             except Exception as e:
-                _LOGGER.warning(f"Attempt {attempt}/{attempts} failed: {e}")
+                _LOGGER.warning(f"Attempt {attempt}/{attempts} failed: {e}", exc_info=True)
                 time.sleep(1)  # Retry delay
 
-        _LOGGER.error(f"Failed to send instruction after {attempts} attempts to {self.host}.")
+        _LOGGER.error(f"Failed to send instruction {instr} after {attempts} attempts to {self.host}.")
         return None
 
     def _send_command(self, command: str) -> Optional[dict]:
@@ -89,7 +90,7 @@ class NoHassleHDMOMatrixController:
         """
         response = self._send_instr(instr)
         if response:
-            _LOGGER.info(f"{action} executed successfully. Response: {response}")
+            _LOGGER.debug(f"{action} executed successfully. Response: {response}")
             if delay:
                 time.sleep(delay)
             return response
@@ -210,6 +211,24 @@ class NoHassleHDMOMatrixController:
         if not status or "power" not in status:
             return None
         return status["power"] == 1
+
+    # ----------------- Device Status Commands -----------------
+
+    def get_status(self) -> Optional[dict]:
+        """Retrieves the general status of the device."""
+        return self._send_command("get status")
+
+    def get_video_status(self) -> Optional[dict]:
+        """Retrieves the video status of the device."""
+        return self._send_command("get videostatus")
+
+    def get_input_status(self) -> Optional[dict]:
+        """Retrieves the input status of the device."""
+        return self._send_command("get input status")
+
+    def get_output_status(self) -> Optional[dict]:
+        """Retrieves the output status of the device."""
+        return self._send_command("get output status")
 
     def _perform_power_command(self, power_state: int, action: str) -> None:
         """
