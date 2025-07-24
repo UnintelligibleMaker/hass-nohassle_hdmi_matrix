@@ -31,9 +31,10 @@ The Switch is for the main power on/off of the unit.
 
 ## Usage
 You should have 9 new entities:
-1x Switch - On/Off of unit
-8x Selectors with the names from the device.  Example
+* 1x Switch - On/Off of unit
+* 8x Selectors with the names from the device.  Example
 
+```
 192.168.1.168 Power - [ On, Off ]
 Output1 - [Input1, Input2, Input3, Input4, Input5, Input6, Input7, Input8]
 Output2 - [Input1, Input2, Input3, Input4, Input5, Input6, Input7, Input8]
@@ -43,3 +44,4 @@ Output5 - [Input1, Input2, Input3, Input4, Input5, Input6, Input7, Input8]
 Output6 - [Input1, Input2, Input3, Input4, Input5, Input6, Input7, Input8]
 Output7 - [Input1, Input2, Input3, Input4, Input5, Input6, Input7, Input8]
 Output8 - [Input1, Input2, Input3, Input4, Input5, Input6, Input7, Input8]
+```
