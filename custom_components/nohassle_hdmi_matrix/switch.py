@@ -30,11 +30,17 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         _LOGGER.error(f"Error: host {host} is not reachable")
         return
 
+    currently_on =  self._controller.are_devices_powered_on()
+    self._controller.power_on_devices()
+    
     _LOGGER.info(f'Adding entity for Power of HDMI Matrix')
     entity = HDMIMatrixPower(host, controller)
     _LOGGER.info(f'entityId: #{entity.unique_id}')
     hass.data[DATA_HDMIMATRIX][entity.unique_id] = entity
     add_entities([entity], True)
+    if not currently_on:
+        self._controller.power_off_devices()
+
 
     def service_handle(service):
         """Handle for services."""
