@@ -4,7 +4,7 @@ import logging
 from .nohassle_hdmi_matrix import NoHassleHDMOMatrixController
 from .const import DATA_HDMIMATRIX, ATTR_SOURCE, SERVICE_SETZONE
 from .hdmi_matrix_switch import HDMIMatrixSwitch
-from .hdmi_matrix_select import HDMIMatrixSelect
+from .hdm_matrix_select import HDMIMatrixSelect
 
 _logger = logging.getLogger(__name__)
 from homeassistant.const import (
