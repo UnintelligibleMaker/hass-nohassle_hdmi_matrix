@@ -34,21 +34,11 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     currently_on =  controller.are_devices_powered_on()
     controller.power_on_devices()
     
-    entities = []
-    
     _logger.info(f'Adding entity for Power of HDMI Matrix')
     entity = HDMIMatrixSwitch(host, controller)
     _logger.info(f'entityId: #{entity.unique_id}')
     hass.data[DATA_HDMIMATRIX][entity.unique_id] = entity
-    entities.append(entity)
-    
-    for device_num in range(0, controller.get_device_count()):
-        _logger.info(f'Adding entity for device: #{device_num}')
-        entity = HDMIMatrixSelect(host, device_num, controller)
-        _logger.info(f'entityId: #{entity.unique_id}')
-        hass.data[DATA_HDMIMATRIX][entity.unique_id] = entity
-        entities.append(entity)
-    add_entities(entities, True)
+    add_entities([entity], True)
     
     if not currently_on:
         controller.power_off_devices()
