@@ -15,9 +15,6 @@ from homeassistant.components.select.const import (
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the HDMI Matrix platform."""
-
-    return
-    
     if DATA_HDMIMATRIX not in hass.data:
         hass.data[DATA_HDMIMATRIX] = {}
 
