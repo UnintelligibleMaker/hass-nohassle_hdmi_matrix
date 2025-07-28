@@ -53,7 +53,7 @@ class NoHassleHDMOMatrixController:
                             _LOGGER.debug(f"Instruction succeeded on attempt {attempt}.")
                             return result
                         else:
-                            _LOGGER.warning(f"Instruction {instr} failed on {attempt} due to recieved ComHead {result.get("comhead")}.")
+                            _LOGGER.warning(f"Instruction {instr} failed on {attempt} due to recieved ComHead in result: {result}.")
                     else:
                         _LOGGER.warning(f"Instruction {instr} failed on {attempt} due to status {response.status}.")
             except Exception as e:
