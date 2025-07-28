@@ -26,22 +26,18 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         _logger.error(f"Error: host name is not defined in the config")
         return
 
+    
     controller = NoHassleHDMOMatrixController(host=host)
+    controller.power_on_devices()
     if controller.get_status() is None:
         _logger.error(f"Error: host {host} is not reachable")
         return
 
-    currently_on =  controller.are_devices_powered_on()
-    controller.power_on_devices()
-    
     _logger.info(f'Adding entity for Power of HDMI Matrix')
     entity = HDMIMatrixSwitch(host, controller)
     _logger.info(f'entityId: #{entity.unique_id}')
     hass.data[DATA_HDMIMATRIX][entity.unique_id] = entity
     add_entities([entity], True)
-    
-    if not currently_on:
-        controller.power_off_devices()
 
     def service_handle(service):
         """Handle for services."""
