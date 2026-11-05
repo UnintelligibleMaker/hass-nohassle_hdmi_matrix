@@ -1,10 +1,9 @@
 """Support for interfacing with HDMI Matrix."""
 import logging
 
-from .nohassle_hdmi_matrix import NoHassleHDMOMatrixController
 from .const import DATA_HDMIMATRIX, ATTR_SOURCE, SERVICE_SETZONE
 from .hdmi_matrix_switch import HDMIMatrixSwitch
-from .hdm_matrix_select import HDMIMatrixSelect
+from .event_manager import get_host_bundle
 
 _logger = logging.getLogger(__name__)
 from homeassistant.const import (
@@ -26,15 +25,18 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         _logger.error(f"Error: host name is not defined in the config")
         return
 
-    
-    controller = NoHassleHDMOMatrixController(host=host)
-    controller.power_on_devices()
+    # Shared controller + telnet event manager (created once per host).
+    bundle = get_host_bundle(hass, host)
+    controller = bundle["controller"]
+    manager = bundle["manager"]
+
     if controller.get_status() is None:
         _logger.error(f"Error: host {host} is not reachable")
         return
 
     _logger.info(f'Adding entity for Power of HDMI Matrix')
     entity = HDMIMatrixSwitch(host, controller)
+    entity._manager = manager
     _logger.info(f'entityId: #{entity.unique_id}')
     hass.data[DATA_HDMIMATRIX][entity.unique_id] = entity
     add_entities([entity], True)

@@ -1,6 +1,7 @@
 import json
 import logging
 import time
+import threading
 from urllib import request
 from typing import Optional, List
 
@@ -14,6 +15,8 @@ class NoHassleHDMOMatrixController:
     managing sources/devices, and performing power operations.
     """
 
+    _CACHE_TTL = 8  # seconds; collapse the per-poll burst of identical reads into one HTTP call
+
     def __init__(self, host: str):
         """
         Initialize the NoHassleHDMOMatrixController with the host address.
@@ -22,6 +25,13 @@ class NoHassleHDMOMatrixController:
             host (str): The host address (URL) of the device.
         """
         self.host = host
+        self._cache = {}                      # command -> (monotonic_ts, result)
+        self._cache_lock = threading.Lock()
+
+    def _invalidate_cache(self) -> None:
+        """Drop cached reads after a state-changing command."""
+        with self._cache_lock:
+            self._cache.clear()
 
     # ----------------- Core Helper Methods -----------------
 
@@ -73,12 +83,19 @@ class NoHassleHDMOMatrixController:
         Returns:
             Optional[dict]: Response from the host if successful; otherwise None.
         """
-        _LOGGER.debug(f"Sending command: '{command}'")
-        instr = {
-            "comhead": command,
-            "language": 0,
-        }
-        return self._log_response(instr, command)
+        with self._cache_lock:
+            hit = self._cache.get(command)
+            if hit and (time.monotonic() - hit[0]) < self._CACHE_TTL:
+                return hit[1]
+            _LOGGER.debug(f"Sending command: '{command}'")
+            instr = {
+                "comhead": command,
+                "language": 0,
+            }
+            result = self._log_response(instr, command)
+            if result is not None:
+                self._cache[command] = (time.monotonic(), result)
+            return result
 
     def _log_response(self, instr: dict, action: str, delay: int = 0) -> Optional[dict]:
         """
@@ -192,7 +209,9 @@ class NoHassleHDMOMatrixController:
             "language": 0,
             "source": [source_num, device_num],
         }
-        return self._log_response(instr, "video switch command")
+        result = self._log_response(instr, "video switch command")
+        self._invalidate_cache()
+        return result
 
     # ----------------- Power Control -----------------
 
@@ -248,6 +267,7 @@ class NoHassleHDMOMatrixController:
             "power": power_state,
         }
         self._log_response(instr, action, delay=2)
+        self._invalidate_cache()
 
     # ----------------- Utility Methods -----------------
 

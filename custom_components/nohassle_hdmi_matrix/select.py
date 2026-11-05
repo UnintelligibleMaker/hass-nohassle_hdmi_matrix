@@ -2,9 +2,9 @@
 
 import logging
 
-from .nohassle_hdmi_matrix import NoHassleHDMOMatrixController
 from .const import  DATA_HDMIMATRIX, ATTR_SOURCE, SERVICE_SETZONE
 from .hdm_matrix_select import HDMIMatrixSelect
+from .event_manager import get_host_bundle
 
 _logger = logging.getLogger(__name__)
 from homeassistant.const import (
@@ -24,7 +24,11 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         _logger.error(f"Error: host name is not defined in the config")
         return
 
-    controller = NoHassleHDMOMatrixController(host=host)
+    # Shared controller + telnet event manager (created once per host).
+    bundle = get_host_bundle(hass, host)
+    controller = bundle["controller"]
+    manager = bundle["manager"]
+
     if controller.get_status() is None:
         _logger.error(f"Error: host {host} is not reachable")
         return
@@ -33,6 +37,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     for device_num in range(0, controller.get_device_count()):
         _logger.info(f'Adding entity for device: #{device_num}')
         entity = HDMIMatrixSelect(host, device_num, controller)
+        entity._manager = manager
         _logger.info(f'entityId: #{entity.unique_id}')
         hass.data[DATA_HDMIMATRIX][entity.unique_id] = entity
         entities.append(entity)
@@ -53,5 +58,3 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
                 entity.select_source(source)
 
     hass.services.register(DOMAIN, SERVICE_SETZONE, service_handle)
-
-

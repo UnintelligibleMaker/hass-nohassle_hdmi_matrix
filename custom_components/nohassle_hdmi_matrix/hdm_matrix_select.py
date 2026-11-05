@@ -73,9 +73,10 @@ class HDMIMatrixSelect(SelectEntity):
 
     def select_option(self, option: str) -> None:
         """Set input option."""
-        option_num = self.options.index(option)
-        if not option_num:
-            _logger.error(f"Unknown Option: {option}, N: {option_num}")
+        try:
+            option_num = self.options.index(option)
+        except ValueError:
+            _logger.error(f"Unknown option: {option}")
             return
 
         _logger.debug(f'Setting device {self._device_number} source to {option_num}')
@@ -87,3 +88,13 @@ class HDMIMatrixSelect(SelectEntity):
         self.current_option = option
         if power_off:
             self._controller.power_off_devices()
+
+    async def async_added_to_hass(self):
+        manager = getattr(self, "_manager", None)
+        if manager is not None:
+            manager.register_entity(self)
+
+    async def async_will_remove_from_hass(self):
+        manager = getattr(self, "_manager", None)
+        if manager is not None:
+            manager.unregister_entity(self)
