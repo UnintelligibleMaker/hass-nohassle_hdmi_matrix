@@ -1,47 +1,61 @@
 No Hassle AV HDMI Matrix
 ============
-This is my rewrite of: https://github.com/IDmedia/hass-nohassle_hdmi_matrix  
+This is my rewrite of: https://github.com/IDmedia/hass-nohassle_hdmi_matrix
+
+A Home Assistant integration for No Hassle AV HDMI matrix switches (e.g. the
+HDP-MXB88DA 8x8). Source and output names are pulled from the device itself,
+not from the config. It exposes the matrix as a **single device** with a power
+switch and one select per output, and listens to the matrix's telnet event
+stream for near-instant state updates (HTTP polling is kept as a backstop).
 
 ## Installation using HACS (Recommended)
-1. Navigate to HACS and add a custom repository  
+1. Navigate to HACS and add a custom repository
     **URL:** https://github.com/UnintelligibleMaker/hass-nohassle_hdmi_matrix
     **Category:** Integration
-2. Install module as usual
+2. Install the integration
 3. Restart Home Assistant
 
 ## Configuration
-| Key | Default | Required | Description
-| --- | --- | --- | ---
-| host | 127.0.0.1 | no | The ip or hostname of your hdmi matrix.
+Configured from the UI — no YAML.
 
-## Example
-Add the following to your `configuration.yaml`:
-```
+1. **Settings → Devices & Services → Add Integration**
+2. Search for **No Hassle AV HDMI Matrix**
+3. Enter the **host** (IP or hostname) of the matrix
+
+| Key | Required | Description |
+| --- | --- | --- |
+| host | yes | The IP or hostname of your HDMI matrix |
+
+That creates one device with all its entities grouped under it. You can reload
+or remove it from Settings → Devices & Services without restarting Home Assistant.
+
+### Migrating from the old YAML config
+Older versions were set up with `switch:` / `select:` platform blocks in
+`configuration.yaml`. If you still have those, they are **imported automatically**
+into a config entry on the next restart — entity IDs and history are preserved.
+Once the device shows up, delete the old blocks:
+```yaml
+# remove these once the integration appears under Devices & Services:
+switch:
+  - platform: nohassle_hdmi_matrix
+    host: 192.168.1.168
 select:
   - platform: nohassle_hdmi_matrix
     host: 192.168.1.168
-
-switch:
-  - platform: nohassle_hdmi_matrix
-    host: 192.168.1.168    
 ```
 
-The Select is for the outputs to select input.
-The Switch is for the main power on/off of the unit.
+## Entities
+You get **one device** with 9 entities:
+* **1x switch** — power on/off of the unit
+* **8x select** — one per output; the options are the input names read from the device
 
-## Usage
-You should have 9 new entities:
-* 1x Switch - On/Off of unit
-* 8x Selectors with the names from the device.  Example
-
+Example:
 ```
-192.168.1.168 Power - [ On, Off ]
-Output1 - [Input1, Input2, Input3, Input4, Input5, Input6, Input7, Input8]
-Output2 - [Input1, Input2, Input3, Input4, Input5, Input6, Input7, Input8]
-Output3 - [Input1, Input2, Input3, Input4, Input5, Input6, Input7, Input8]
-Output4 - [Input1, Input2, Input3, Input4, Input5, Input6, Input7, Input8]
-Output5 - [Input1, Input2, Input3, Input4, Input5, Input6, Input7, Input8]
-Output6 - [Input1, Input2, Input3, Input4, Input5, Input6, Input7, Input8]
-Output7 - [Input1, Input2, Input3, Input4, Input5, Input6, Input7, Input8]
-Output8 - [Input1, Input2, Input3, Input4, Input5, Input6, Input7, Input8]
+Power            [ On, Off ]
+Output1          [ Input1, Input2, Input3, Input4, Input5, Input6, Input7, Input8 ]
+Output2          [ Input1, Input2, Input3, Input4, Input5, Input6, Input7, Input8 ]
+ ...
+Output8          [ Input1, Input2, Input3, Input4, Input5, Input6, Input7, Input8 ]
 ```
+The switch and output names come from the device, so they match whatever you've
+named things on the matrix.
