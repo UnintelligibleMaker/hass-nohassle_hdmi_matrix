@@ -59,3 +59,36 @@ Output8          [ Input1, Input2, Input3, Input4, Input5, Input6, Input7, Input
 ```
 The switch and output names come from the device, so they match whatever you've
 named things on the matrix.
+
+## CEC control
+The matrix can also inject HDMI-CEC to each **output** (display/AVR) and **input**
+(source). This is exposed as one `remote` entity per port — 16 total, named
+`<Port Name> CEC`:
+
+* **Outputs** (`remote.<output>_cec`): `remote.turn_on` / `turn_off` = CEC power;
+  `remote.send_command` supports `mute`, `volume_up`, `volume_down`.
+* **Inputs** (`remote.<input>_cec`): `remote.turn_on` / `turn_off` = CEC power;
+  `remote.send_command` supports `up`, `down`, `left`, `right`, `ok`, `menu`,
+  `back`, `play`, `pause`, `stop`, `previous`, `next`, `rewind`, `fast_forward`,
+  `mute`, `volume_up`, `volume_down`.
+
+Each remote's valid command list is also published in its `cec_commands`
+attribute. Example:
+
+```yaml
+service: remote.send_command
+target:
+  entity_id: remote.fire_tv_cec
+data:
+  command: play
+```
+
+**Availability is live-gated** (CEC only works while the matrix is powered on):
+a CEC remote is `unavailable` when the matrix is off, when its **output** has no
+connected display, or when its **input** has no live signal. Power state is
+reported best-effort (`assumed_state`) — the matrix's CEC power field is not
+fully reliable, so these remotes don't try to lie about it.
+
+> CEC does nothing while the matrix is in standby. This integration deliberately
+> does **not** auto-power the matrix — if you want "turn the matrix on, wait,
+> then CEC-power a TV," build that as a Home Assistant automation.

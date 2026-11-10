@@ -213,6 +213,23 @@ class NoHassleHDMOMatrixController:
         self._invalidate_cache()
         return result
 
+    def send_cec(self, obj: int, port: List[int], index: Optional[int] = None) -> Optional[dict]:
+        """Send a CEC command.
+
+        Args:
+            obj: 1 = output (sink/display), 0 = input (source).
+            port: 8-int target mask (1 = apply to that port). Use a one-hot mask
+                  to target a single port.
+            index: CEC key code (see the integration's remote command maps).
+                   Omit for a bare power-state array write.
+        """
+        instr = {"comhead": "cec command", "language": 0, "object": obj, "port": port}
+        if index is not None:
+            instr["index"] = index
+        result = self._log_response(instr, "cec command")
+        self._invalidate_cache()
+        return result
+
     # ----------------- Power Control -----------------
 
     def power_on_devices(self) -> None:
@@ -252,6 +269,10 @@ class NoHassleHDMOMatrixController:
     def get_output_status(self) -> Optional[dict]:
         """Retrieves the output status of the device."""
         return self._send_command("get output status")
+
+    def get_cec_status(self) -> Optional[dict]:
+        """Retrieves CEC status (per-port CEC power + names)."""
+        return self._send_command("get cec status")
 
     def _perform_power_command(self, power_state: int, action: str) -> None:
         """
