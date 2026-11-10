@@ -4,6 +4,9 @@ import logging
 import voluptuous as vol
 
 from homeassistant.components.select import SelectEntity
+from homeassistant.helpers.device_registry import DeviceInfo
+
+from .const import DOMAIN
 
 _logger = logging.getLogger(__name__)
 
@@ -13,6 +16,7 @@ class HDMIMatrixSelect(SelectEntity):
     def __init__(self, hdmi_host, device_num, controller):
         self._device_number = device_num
         self._controller = controller
+        self._host = hdmi_host
         self._unique_id = f'{hdmi_host}-output-{device_num}'
         self._options = self._controller.get_sources()
         self._device_name = self._controller.get_devices()[device_num]
@@ -70,6 +74,17 @@ class HDMIMatrixSelect(SelectEntity):
     def unique_id(self):
         """Return the current input source of the device."""
         return self._unique_id
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Group this entity under the single matrix device."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._host)},
+            name="Living Room HDMI Matrix",
+            manufacturer="No Hassle AV",
+            model="HDP-MXB88DA",
+            configuration_url=f"http://{self._host}/",
+        )
 
     def select_option(self, option: str) -> None:
         """Set input option."""

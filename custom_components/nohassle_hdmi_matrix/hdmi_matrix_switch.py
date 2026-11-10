@@ -2,6 +2,9 @@
 
 import logging
 from homeassistant.components.switch import SwitchEntity
+from homeassistant.helpers.device_registry import DeviceInfo
+
+from .const import DOMAIN
 
 _logger = logging.getLogger(__name__)
 
@@ -10,6 +13,7 @@ class HDMIMatrixSwitch(SwitchEntity):
 
     def __init__(self, hdmi_host, controller):
         self._controller = controller
+        self._host = hdmi_host
         self._unique_id = f'{hdmi_host}-power-switch'
         self._device_name = f'{hdmi_host} Power Switch'
         self._is_on = self._controller.are_devices_powered_on()
@@ -31,6 +35,17 @@ class HDMIMatrixSwitch(SwitchEntity):
     def unique_id(self):
         """Return the unique id of the device."""
         return self._unique_id
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Group this entity under the single matrix device."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._host)},
+            name="Living Room HDMI Matrix",
+            manufacturer="No Hassle AV",
+            model="HDP-MXB88DA",
+            configuration_url=f"http://{self._host}/",
+        )
 
     @property
     def is_on(self):

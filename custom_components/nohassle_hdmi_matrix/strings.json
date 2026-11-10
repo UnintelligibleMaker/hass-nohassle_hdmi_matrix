@@ -1,0 +1,19 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "No Hassle AV HDMI Matrix",
+        "description": "Enter the hostname or IP address of the matrix.",
+        "data": {
+          "host": "Host"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the matrix at that host."
+    },
+    "abort": {
+      "already_configured": "This matrix is already configured."
+    }
+  }
+}
