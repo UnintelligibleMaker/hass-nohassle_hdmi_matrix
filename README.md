@@ -61,14 +61,26 @@ The switch and output names come from the device, so they match whatever you've
 named things on the matrix.
 
 ## CEC control
-The matrix can also inject HDMI-CEC to each **output** (display/AVR) and **input**
-(source). This is exposed as one `remote` entity per port — 16 total, named
-`<Port Name> CEC`:
+The matrix can inject HDMI-CEC to each **output** (display/AVR) and **input**
+(source). Each port gets two entities (32 total), mirroring how the first-party
+AV integrations expose devices:
 
-* **Outputs** (`remote.<output>_cec`): `remote.turn_on` / `turn_off` = CEC power;
-  `remote.send_command` supports `mute`, `volume_up`, `volume_down`.
-* **Inputs** (`remote.<input>_cec`): `remote.turn_on` / `turn_off` = CEC power;
-  `remote.send_command` supports `up`, `down`, `left`, `right`, `ok`, `menu`,
+### `media_player` — clickable controls (one per port)
+Named `<Port Name> Display` (outputs) / `<Port Name> Source` (inputs). These give
+you real, clickable controls in the dashboard with no extra config:
+
+* **Outputs** (`media_player.<output>_display`): power + volume up/down + mute.
+  (Volume is CEC-relative — step buttons, no absolute level/slider.)
+* **Inputs** (`media_player.<input>_source`): power + transport
+  (play / pause / stop / next / previous).
+
+### `remote` — the full CEC keypad (one per port)
+Named `<Port Name> CEC`. Carries every CEC key (including the nav keys a
+media_player has no slot for) via `remote.send_command`, plus power via
+`remote.turn_on` / `turn_off`:
+
+* **Outputs** (`remote.<output>_cec`): `mute`, `volume_up`, `volume_down`.
+* **Inputs** (`remote.<input>_cec`): `up`, `down`, `left`, `right`, `ok`, `menu`,
   `back`, `play`, `pause`, `stop`, `previous`, `next`, `rewind`, `fast_forward`,
   `mute`, `volume_up`, `volume_down`.
 
@@ -84,8 +96,9 @@ data:
 ```
 
 **Availability is live-gated** (CEC only works while the matrix is powered on):
-a CEC remote is `unavailable` when the matrix is off, when its **output** has no
-connected display, or when its **input** has no live signal. Power state is
+a CEC entity (both the media_player and the remote) is `unavailable` when the
+matrix is off, when its **output** has no connected display, or when its
+**input** has no live signal. Power state is
 reported best-effort (`assumed_state`) — the matrix's CEC power field is not
 fully reliable, so these remotes don't try to lie about it.
 
