@@ -97,14 +97,13 @@ class NoHassleHDMOMatrixController:
                 self._cache[command] = (time.monotonic(), result)
             return result
 
-    def _log_response(self, instr: dict, action: str, delay: int = 0) -> Optional[dict]:
+    def _log_response(self, instr: dict, action: str) -> Optional[dict]:
         """
         Sends an instruction and logs the result.
 
         Args:
             instr (dict): The instruction to be sent.
             action (str): The corresponding action for the instruction.
-            delay (int): Optional delay after sending the instruction.
 
         Returns:
             Optional[dict]: The host response if successful; otherwise None.
@@ -112,8 +111,6 @@ class NoHassleHDMOMatrixController:
         response = self._send_instr(instr)
         if response:
             _LOGGER.debug(f"{action} executed successfully. Response: {response}")
-            if delay:
-                time.sleep(delay)
             return response
         _LOGGER.error(f"Failed to execute action '{action}'.")
         return None
@@ -258,10 +255,6 @@ class NoHassleHDMOMatrixController:
         """Retrieves the general status of the device."""
         return self._send_command("get status")
 
-    def get_video_status(self) -> Optional[dict]:
-        """Retrieves the video status of the device."""
-        return self._send_command("get videostatus")
-
     def get_input_status(self) -> Optional[dict]:
         """Retrieves the input status of the device."""
         return self._send_command("get input status")
@@ -287,7 +280,7 @@ class NoHassleHDMOMatrixController:
             "language": 0,
             "power": power_state,
         }
-        self._log_response(instr, action, delay=2)
+        self._log_response(instr, action)
         self._invalidate_cache()
 
     # ----------------- Utility Methods -----------------

@@ -9,7 +9,6 @@ import logging
 from homeassistant.const import CONF_HOST
 from homeassistant.exceptions import ConfigEntryNotReady
 
-from .const import DATA_HDMIMATRIX
 from .hdmi_matrix_remote import HDMIMatrixCecRemote
 from .event_manager import get_host_bundle
 
@@ -21,7 +20,6 @@ PORT_COUNT = 8
 async def async_setup_entry(hass, entry, async_add_entities):
     """Set up the CEC remotes from a config entry."""
     host = entry.data[CONF_HOST]
-    hass.data.setdefault(DATA_HDMIMATRIX, {})
 
     def _build():
         bundle = get_host_bundle(hass, host)
@@ -41,6 +39,4 @@ async def async_setup_entry(hass, entry, async_add_entities):
     if entities is None:
         raise ConfigEntryNotReady(f"HDMI matrix at {host} is not reachable")
 
-    for entity in entities:
-        hass.data[DATA_HDMIMATRIX][entity.unique_id] = entity
     async_add_entities(entities, True)
