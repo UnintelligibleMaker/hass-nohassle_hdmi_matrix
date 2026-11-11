@@ -95,14 +95,11 @@ class HDMIMatrixSelect(SelectEntity):
             return
 
         _logger.debug(f'Setting device {self._device_number} source to {option_num}')
-        power_off = False
-        if not self._controller.are_devices_powered_on():
-            self._controller.power_on_devices()
-            power_off = True
+        # The matrix accepts `video switch` while powered off and the change persists
+        # through its next power-on (verified on fw V1.03.33), so routing is done
+        # directly with no power-on/off dance — the driver never powers the matrix.
         self._controller.set_device_source(device_num=self._device_number + 1, source_num=option_num + 1)
         self.current_option = option
-        if power_off:
-            self._controller.power_off_devices()
 
     async def async_added_to_hass(self):
         manager = getattr(self, "_manager", None)
